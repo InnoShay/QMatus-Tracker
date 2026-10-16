@@ -21,13 +21,16 @@ export default async function ListPage({ params, searchParams }: PageProps<"/t/[
   if (!ctx) return <NotAvailable />;
   const { viewer, team, today } = ctx;
 
-  const [workspace, { tasks, truncated }] = await Promise.all([getTeamWorkspace(team.id), listTeamTasks(team.id)]);
+  const taskKey = typeof sp.task === "string" ? sp.task.slice(0, 20) : null;
+  const [workspace, { tasks, truncated }, detail] = await Promise.all([
+    getTeamWorkspace(team.id),
+    listTeamTasks(team.id),
+    taskKey ? getTaskDetail(team.id, taskKey) : null,
+  ]);
   const filters = parseFilters(sp);
   const filtered = applyFilters(tasks, filters, { viewerId: viewer.id, today, statuses: workspace.statuses });
   const sort = SORTS.includes(sp.sort as SortKey) ? (sp.sort as SortKey) : "status";
   const dir = sp.dir === "desc" ? "desc" : "asc";
-  const taskKey = typeof sp.task === "string" ? sp.task.slice(0, 20) : null;
-  const detail = taskKey ? await getTaskDetail(team.id, taskKey) : null;
   const canWrite = canWriteTeam(team);
 
   return (

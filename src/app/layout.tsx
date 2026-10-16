@@ -3,6 +3,7 @@ import "@fontsource-variable/geist-mono/wght.css";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { CursorEffects } from "@/components/fx/cursor-effects";
 import { Toaster } from "@/components/ui/toast";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-dvh bg-canvas text-fg antialiased">
         {children}
         <Toaster />
+        <CursorEffects />
       </body>
     </html>
   );

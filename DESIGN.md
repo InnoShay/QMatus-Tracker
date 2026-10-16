@@ -73,6 +73,17 @@ listing every series, legend keys beside the headline figures, a "Show as table"
 view, clean ticks. Series order is fixed (created = chart-1, completed = chart-2) and
 validated for colour-vision deficiency with the dataviz checker in both modes.
 
+**Glass and light (D-032).** Floating chrome is glass (`.qm-glass`, `.qm-glass-panel`):
+the header, mobile nav, menus, command palette, toasts and dialog backdrops, over a fixed
+ambient light from the two brand colours. Panels (`.qm-card`, `.qm-spot`) catch a soft
+cobalt spotlight and lit edge under the cursor. Primary buttons have a lit top edge, a
+brand glow and a 2–3px magnetic lean. The sidebar has one gliding hover highlight.
+Skeletons breathe with a slow sheen. Route changes settle in 220ms (fade + 4px rise).
+The native cursor is never replaced.
+
+**Greeting.** An original one-stroke "hello" is written on, held briefly, then dissolves
+into the app. Once per browser session, never blocking, off under reduced motion.
+
 The original "Quiet Precision" notes follow for context.
 
 **Quiet Precision (superseded).** A well-made engineering instrument: state is unmistakable, the

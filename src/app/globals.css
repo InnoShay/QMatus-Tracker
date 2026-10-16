@@ -93,6 +93,18 @@
   --chart-grid: light-dark(#e6e9ee, #20232a);
   --chart-track: light-dark(#e9ecf1, #1f2229);
 
+  --ambient-1: light-dark(
+    color-mix(in oklab, var(--brand-primary) 7%, transparent),
+    color-mix(in oklab, var(--brand-primary) 11%, transparent)
+  );
+  --ambient-2: light-dark(color-mix(in oklab, var(--brand-ember) 5%, transparent), color-mix(in oklab, var(--brand-ember) 6%, transparent));
+  --glass-bg: light-dark(rgb(255 255 255 / 0.72), rgb(16 18 23 / 0.66));
+  --glass-border: light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.06));
+  --spot: light-dark(color-mix(in oklab, var(--brand-primary) 9%, transparent), color-mix(in oklab, var(--brand-primary) 14%, transparent));
+  --spot-edge: light-dark(
+    color-mix(in oklab, var(--brand-primary) 45%, transparent),
+    color-mix(in oklab, var(--brand-primary) 55%, transparent)
+  );
   --shadow-float:
     0 12px 32px -8px light-dark(rgb(16 24 40 / 0.18), rgb(0 0 0 / 0.6)), 0 2px 6px -2px light-dark(rgb(16 24 40 / 0.1), rgb(0 0 0 / 0.45));
   --shadow-raised: 0 1px 2px light-dark(rgb(16 24 40 / 0.06), rgb(0 0 0 / 0.4));
@@ -223,7 +235,14 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    background: var(--app-bg);
+    background-color: var(--app-bg);
+    /* Ambient light from the two brand colours: painted once, fixed, so the
+       glass header and panels have something real to sit over. */
+    background-image:
+      radial-gradient(60rem 28rem at 12% -10%, var(--ambient-1), transparent 70%),
+      radial-gradient(48rem 24rem at 100% -6%, var(--ambient-2), transparent 70%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 14px;
@@ -260,7 +279,291 @@
 
 /* Motion: entrances use @starting-style so no JS waits on them (Emil: CSS
    transitions over keyframes; interruptible). */
+@property --qm-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 @layer components {
+  /* Top bar: a hairline that fades out at both ends, and depth once content
+     scrolls underneath (data-scrolled, set by an IntersectionObserver). */
+  .qm-topbar::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong) 18%, var(--border-strong) 82%, transparent);
+    opacity: 0.6;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+  }
+  .qm-topbar {
+    transition: box-shadow 240ms ease;
+  }
+  .qm-topbar[data-scrolled] {
+    box-shadow: 0 10px 30px -18px light-dark(rgb(16 24 40 / 0.25), rgb(0 0 0 / 0.8));
+  }
+  .qm-topbar[data-scrolled]::after {
+    opacity: 1;
+  }
+  .qm-search:hover {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-primary) 10%, transparent);
+  }
+  /* The bell gives a small ring when you reach for it. */
+  .qm-bell {
+    transform-origin: 50% 12%;
+  }
+  .group:hover .qm-bell,
+  .group:focus-visible .qm-bell {
+    animation: qm-ring 700ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+  @keyframes qm-ring {
+    20% {
+      transform: rotate(16deg);
+    }
+    40% {
+      transform: rotate(-12deg);
+    }
+    60% {
+      transform: rotate(7deg);
+    }
+    80% {
+      transform: rotate(-3deg);
+    }
+  }
+  /* Theme toggle: sun and moon swap with a turn. */
+  .qm-theme-icon {
+    transition:
+      transform 420ms var(--ease-out-ui),
+      opacity 200ms ease;
+  }
+  .qm-theme-icon-in {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  .qm-theme-icon-out {
+    transform: rotate(-90deg) scale(0.4);
+    opacity: 0;
+  }
+  .group:hover .qm-theme-icon-in {
+    transform: rotate(18deg) scale(1.06);
+  }
+  /* Account: a quiet ring that becomes a turning brand gradient on hover. */
+  .qm-avatar-ring {
+    background: var(--border-strong);
+  }
+  .qm-account:hover .qm-avatar-ring,
+  .qm-account[data-state="open"] .qm-avatar-ring {
+    background: conic-gradient(from var(--qm-angle), var(--brand-primary), var(--brand-ember), var(--brand-primary));
+    animation: qm-turn 3s linear infinite;
+  }
+  @keyframes qm-turn {
+    to {
+      --qm-angle: 360deg;
+    }
+  }
+  /* Boot greeting. Hidden unless <html data-boot>; never takes input.
+     Light: a soft pastel field with a glossy stroke. Dark: true black. */
+  .qm-boot {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    place-items: center;
+    pointer-events: none;
+    background-color: light-dark(#f3f5ff, #000);
+    background-image: radial-gradient(42rem 30rem at 0% 0%, light-dark(rgb(170 240 214 / 0.75), rgb(0 0 0 / 0)), transparent 70%);
+    contain: strict;
+  }
+  .qm-boot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(46rem 34rem at 100% 100%, light-dark(rgb(196 186 255 / 0.85), rgb(40 60 140 / 0.14)), transparent 70%);
+    pointer-events: none;
+  }
+  :root[data-boot] .qm-boot {
+    display: grid;
+  }
+  .qm-boot-word {
+    position: relative;
+    z-index: 1;
+    width: min(620px, 82vw);
+    overflow: visible;
+    will-change: transform, opacity, filter;
+  }
+  .qm-boot-word path {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  :root[data-boot="draw"] .qm-boot-word path {
+    animation: qm-write 1.3s cubic-bezier(0.5, 0.05, 0.3, 1) 0.08s forwards;
+  }
+  .qm-hello-ink {
+    stroke-width: 24;
+  }
+  /* The tube's highlight: light theme only, riding the top of the stroke. */
+  .qm-hello-gloss {
+    stroke-width: 7;
+    transform: translate(-2px, -6px);
+  }
+  .qm-hello-gloss-stop {
+    stop-color: light-dark(#fff, rgb(255 255 255 / 0));
+  }
+  .qm-boot[data-phase="out"] {
+    opacity: 0;
+    transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .qm-boot[data-phase="out"] .qm-boot-word {
+    transform: scale(1.06);
+    filter: blur(10px);
+    transition:
+      transform 500ms cubic-bezier(0.4, 0, 0.2, 1),
+      filter 500ms ease;
+  }
+  .qm-boot[data-phase="out"] .qm-boot-word path {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  @keyframes qm-write {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes qm-word-in {
+    from {
+      opacity: 0;
+    }
+  }
+  /* Glass: only on floating chrome (header, menus, dialogs, toasts, mobile nav),
+     never under body text blocks. Small blur radius keeps it cheap to composite. */
+  .qm-glass {
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    backdrop-filter: saturate(160%) blur(16px);
+  }
+  .qm-glass-panel {
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: saturate(170%) blur(20px);
+    backdrop-filter: saturate(170%) blur(20px);
+    box-shadow:
+      0 0 0 1px var(--glass-border) inset,
+      var(--shadow-float);
+  }
+
+  /* Sidebar: one highlight glides to the item under the pointer. */
+  .qm-nav-highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    border-radius: var(--radius-sm);
+    background: var(--surface-hover);
+    box-shadow: 0 0 0 1px var(--border-subtle) inset;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform 180ms var(--ease-out-ui),
+      height 180ms var(--ease-out-ui),
+      width 180ms var(--ease-out-ui),
+      opacity 120ms ease;
+    will-change: transform;
+  }
+  .qm-nav-highlight[data-show="true"] {
+    opacity: 1;
+  }
+
+  /* Cursor spotlight: a soft light and a lit edge follow the pointer across a
+     panel. Position comes from --mx/--my, set by one delegated listener
+     (CursorEffects) on the hovered panel only; no per-frame React work. */
+  .qm-card,
+  .qm-spot {
+    position: relative;
+    isolation: isolate;
+  }
+  .qm-card::before,
+  .qm-spot::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 220ms ease;
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), var(--spot), transparent 60%);
+  }
+  .qm-card::after,
+  .qm-spot::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 220ms ease;
+    padding: 1px;
+    background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), var(--spot-edge), transparent 65%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .qm-card[data-spot]::before,
+    .qm-card[data-spot]::after,
+    .qm-spot[data-spot]::before,
+    .qm-spot[data-spot]::after {
+      opacity: 1;
+    }
+  }
+
+  /* Primary actions: a lit top edge and a brand glow on hover. */
+  .qm-action {
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.18) inset,
+      0 1px 2px rgb(0 0 0 / 0.2);
+    transition:
+      background-color var(--duration-hover) ease,
+      box-shadow 200ms var(--ease-out-ui),
+      translate 260ms var(--ease-out-ui),
+      transform var(--duration-fast) var(--ease-out-ui);
+  }
+  .qm-action:hover:not(:disabled) {
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.22) inset,
+      0 6px 20px -6px color-mix(in oklab, var(--brand-primary) 70%, transparent);
+  }
+
+  /* Loading placeholders breathe with a slow sheen instead of sitting dead. */
+  /* A pending task panel hands over to the real one without a second entrance. */
+  :root[data-panel-handoff] .qm-panel[data-state="open"] {
+    @starting-style {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  .qm-skeleton {
+    background: linear-gradient(100deg, transparent 30%, light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.045)) 50%, transparent 70%)
+      var(--surface-subtle);
+    background-size: 220% 100%;
+    animation: qm-sheen 1.4s ease-in-out infinite;
+  }
+  @keyframes qm-sheen {
+    from {
+      background-position: 120% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
   /* A working panel: a visible surface step, a hairline and (in dark) a lit top edge. */
   .qm-card {
     background: var(--surface);
@@ -325,6 +628,8 @@
       background-color var(--duration-hover) ease,
       border-color var(--duration-hover) ease,
       color var(--duration-hover) ease,
+      box-shadow 200ms var(--ease-out-ui),
+      translate 260ms var(--ease-out-ui),
       transform var(--duration-fast) var(--ease-out-ui);
   }
   .qm-press:active:not(:disabled) {
@@ -357,5 +662,28 @@
   }
   html:focus-within {
     scroll-behavior: auto;
+  }
+  .qm-skeleton {
+    animation: none;
+  }
+  .group:hover .qm-bell,
+  .group:focus-visible .qm-bell,
+  .qm-account:hover .qm-avatar-ring {
+    animation: none;
+  }
+  .qm-boot-word path,
+  :root[data-boot="draw"] .qm-boot-word path {
+    stroke-dashoffset: 0;
+    animation: qm-word-in 250ms ease-out both;
+  }
+  .qm-boot[data-phase="out"] .qm-boot-word {
+    transform: none;
+    filter: none;
+  }
+  .qm-nav-highlight {
+    transition: opacity 120ms ease;
+  }
+  :root[data-panel-handoff] .qm-panel {
+    transition: none;
   }
 }

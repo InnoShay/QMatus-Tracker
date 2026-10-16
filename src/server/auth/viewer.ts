@@ -57,25 +57,25 @@ const TEAM_COLUMNS = "id, slug, name, issue_prefix, description, accepts_request
  */
 export const loadViewer = cache(async (): Promise<Viewer | null | { inactive: true }> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  // The signed JWT (verified locally) names the user; the Auth server check
+  // (catches revoked sessions) runs in parallel with the data reads instead of
+  // before them, and must agree with it before anything is returned.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const uid = claimsData?.claims?.sub;
+  if (!uid) return null;
 
-  const [profileRes, orgRes, membershipRes, grantRes] = await Promise.all([
-    supabase.from("profiles").select("id, email, display_name, title, timezone, theme").eq("id", user.id).maybeSingle(),
+  const [authRes, profileRes, orgRes, membershipRes, grantRes] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("profiles").select("id, email, display_name, title, timezone, theme").eq("id", uid).maybeSingle(),
     supabase
       .from("organization_memberships")
       .select("org_id, role, state, can_request, organizations(name, slug)")
-      .eq("profile_id", user.id)
+      .eq("profile_id", uid)
       .maybeSingle(),
-    supabase.from("team_memberships").select(`role, teams(${TEAM_COLUMNS})`).eq("profile_id", user.id).eq("active", true),
-    supabase
-      .from("team_access_grants")
-      .select(`scope, expires_at, teams(${TEAM_COLUMNS})`)
-      .eq("grantee_id", user.id)
-      .eq("status", "active"),
+    supabase.from("team_memberships").select(`role, teams(${TEAM_COLUMNS})`).eq("profile_id", uid).eq("active", true),
+    supabase.from("team_access_grants").select(`scope, expires_at, teams(${TEAM_COLUMNS})`).eq("grantee_id", uid).eq("status", "active"),
   ]);
+  if (authRes.data.user?.id !== uid) return null;
 
   const profile = profileRes.data;
   const org = orgRes.data;

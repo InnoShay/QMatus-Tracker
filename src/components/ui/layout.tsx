@@ -122,5 +122,5 @@ export function NotAvailable({ title = "This isn't available", body }: { title?:
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("rounded-sm bg-subtle", className)} aria-hidden />;
+  return <div className={cn("qm-skeleton rounded-sm", className)} aria-hidden />;
 }

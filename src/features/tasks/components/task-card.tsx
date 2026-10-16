@@ -8,6 +8,7 @@ import { BlockedBadge, IssueKey, PriorityMark } from "@/components/ui/badges";
 import { cn } from "@/components/ui/cn";
 import { dueState, formatDueDate } from "@/lib/dates";
 import type { TaskCard } from "../types";
+import { PendingTaskPanel } from "./task-panel";
 
 export function DueCue({ due, today, done }: { due: string; today: string; done: boolean }) {
   const state = done ? "later" : dueState(due, today);
@@ -76,7 +77,7 @@ export function TaskCardView({
     <article
       aria-label={`${task.key}: ${task.title}`}
       className={cn(
-        "group relative flex flex-col gap-2 rounded-lg border bg-raised px-3.5 py-3 text-left shadow-panel",
+        "qm-spot group relative flex flex-col gap-2 rounded-lg border bg-raised px-3.5 py-3 text-left shadow-panel",
         "transition-[border-color,box-shadow] duration-[120ms]",
         dragging ? "border-accent shadow-drag" : "border-line-strong/70 hover:border-control/70",
         done && !dragging && "bg-surface",
@@ -111,6 +112,7 @@ export function TaskCardView({
         )}
       >
         {task.title}
+        <PendingTaskPanel taskKey={task.key} title={task.title} />
       </Link>
       {task.labels.length > 0 && (
         <div className="flex flex-wrap gap-1">

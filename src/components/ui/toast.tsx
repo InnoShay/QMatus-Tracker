@@ -43,7 +43,7 @@ export function Toaster() {
         <div
           key={t.id}
           role={t.tone === "error" ? "alert" : "status"}
-          className="qm-toast pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-md border border-line-strong bg-surface px-3.5 py-3 text-body text-fg shadow-float"
+          className="qm-toast qm-glass-panel pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-lg px-3.5 py-3 text-body text-fg"
         >
           {t.tone === "success" ? (
             <CircleCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />

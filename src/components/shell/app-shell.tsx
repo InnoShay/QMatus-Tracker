@@ -12,11 +12,9 @@ import {
   Lightbulb,
   ListTodo,
   LogOut,
-  Menu as MenuIcon,
   PanelLeftClose,
   PanelLeftOpen,
   ScrollText,
-  Search,
   Send,
   Settings,
   Timer,
@@ -28,15 +26,17 @@ import {
 } from "lucide-react";
 import { Dialog } from "radix-ui";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { LogoMark, Wordmark } from "@/components/brand/wordmark";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/cn";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Tip, TooltipProvider } from "@/components/ui/overlays";
 import { signOut } from "@/features/auth/actions";
 import type { ThemePreference } from "@/lib/theme";
+import { IntentLink } from "@/components/nav/intent-link";
 import { CommandMenu, type Command } from "./command-menu";
+import { TopBar, type Crumbs } from "./top-bar";
 import { ThemeControl } from "./theme-control";
 
 export type ShellTeam = { slug: string; name: string; access: string; acceptsRequests: boolean };
@@ -117,6 +117,26 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
   useEffect(() => {
     if (urlTeam && readLocal(TEAM_KEY) !== urlTeam) writeLocal(TEAM_KEY, urlTeam);
   }, [urlTeam]);
+  // New page content settles in (fade + 4px rise) when the route changes. Runs
+  // on the compositor after the new page has committed; query-string changes
+  // (filters, opening a task) don't trigger it.
+  const mainRef = useRef<HTMLElement>(null);
+  const firstPath = useRef(true);
+  useEffect(() => {
+    if (firstPath.current) {
+      firstPath.current = false;
+      return;
+    }
+    const el = mainRef.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    el.animate(
+      [
+        { opacity: 0.35, transform: "translateY(6px)" },
+        { opacity: 1, transform: "none" },
+      ],
+      { duration: 220, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
+    );
+  }, [pathname]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -176,15 +196,87 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
   const isActive = (item: NavItem) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
+  const activeItem = [...teamNav, ...globalNav, ...adminNav, { href: "/settings", label: "Settings", Icon: Settings }].find(isActive);
+  const crumbs: Crumbs = {
+    team: urlTeam && current ? { name: current.name, href: `/t/${current.slug}` } : null,
+    page: activeItem
+      ? { label: activeItem.label, href: activeItem.href, Icon: activeItem.Icon }
+      : urlTeam && pathname.includes("/tasks/")
+        ? { label: "Task", href: pathname, Icon: Rows3 }
+        : null,
+  };
+
+  // "G then key" jumps, like most issue trackers. Ignored while typing.
+  const router = useRouter();
+  useEffect(() => {
+    let armed = 0;
+    const team = current && current.access !== "summary" ? `/t/${current.slug}` : null;
+    const targets: Record<string, string | null> = {
+      w: "/my-work",
+      t: "/my-time",
+      i: "/inbox",
+      r: "/requests",
+      d: team,
+      b: team && `${team}/board`,
+      l: team && `${team}/list`,
+      p: team && `${team}/projects`,
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      const key = e.key.toLowerCase();
+      if (key === "g") {
+        armed = window.setTimeout(() => (armed = 0), 900);
+        return;
+      }
+      if (armed && targets[key]) {
+        window.clearTimeout(armed);
+        armed = 0;
+        e.preventDefault();
+        router.push(targets[key]!);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [current, router]);
+
+  // One highlight glides between sidebar items under the pointer instead of
+  // each item flashing its own hover background (fine pointers only).
+  const highlight = useRef<HTMLSpanElement>(null);
+  const moveHighlight = (e: ReactPointerEvent<HTMLElement>) => {
+    const hl = highlight.current;
+    if (!hl || e.pointerType !== "mouse") return;
+    const item = (e.target as HTMLElement).closest<HTMLElement>("[data-nav-item]");
+    if (!item) {
+      hl.dataset.show = "false";
+      return;
+    }
+    const wasHidden = hl.dataset.show !== "true";
+    if (wasHidden) hl.style.transition = "none";
+    hl.style.transform = `translate3d(${item.offsetLeft}px, ${item.offsetTop}px, 0)`;
+    hl.style.width = `${item.offsetWidth}px`;
+    hl.style.height = `${item.offsetHeight}px`;
+    if (wasHidden) {
+      void hl.offsetWidth;
+      hl.style.transition = "";
+    }
+    hl.dataset.show = "true";
+  };
+  const hideHighlight = () => {
+    if (highlight.current) highlight.current.dataset.show = "false";
+  };
+
   const navLink = (item: NavItem, compact: boolean) => {
     const active = isActive(item);
     const link = (
-      <Link
+      <IntentLink
         href={item.href}
+        data-nav-item=""
         aria-current={active ? "page" : undefined}
         className={cn(
-          "group relative flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-body transition-colors duration-[120ms] pointer-coarse:h-10",
-          active ? "bg-selected font-medium text-fg" : "text-fg-2 hover:bg-hover hover:text-fg",
+          "group relative z-10 flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-body transition-colors duration-[120ms] pointer-coarse:h-10",
+          active ? "bg-selected font-medium text-fg" : "text-fg-2 hover:bg-hover hover:text-fg pointer-fine:hover:bg-transparent",
           compact && "justify-center px-0",
         )}
       >
@@ -206,7 +298,7 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
             <span className="sr-only"> unread</span>
           </span>
         )}
-      </Link>
+      </IntentLink>
     );
     return compact ? (
       <Tip
@@ -275,8 +367,14 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
       </Menu>
     ) : null;
 
-  const sidebarBody = (compact: boolean) => (
-    <nav aria-label="Primary" className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 pt-1 pb-3">
+  const sidebarBody = (compact: boolean, withHighlight = false) => (
+    <nav
+      aria-label="Primary"
+      className="relative flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 pt-1 pb-3"
+      onPointerMove={withHighlight ? moveHighlight : undefined}
+      onPointerLeave={withHighlight ? hideHighlight : undefined}
+    >
+      {withHighlight && <span ref={highlight} className="qm-nav-highlight" data-show="false" aria-hidden />}
       <div className="flex flex-col gap-0.5">
         {!compact && <p className="px-2.5 pb-1.5 text-meta font-medium text-fg-3">Workspace</p>}
         {globalNav.map((i) => navLink(i, compact))}
@@ -305,10 +403,16 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
       <MenuTrigger asChild>
         <button
           type="button"
-          className="grid size-10 place-items-center rounded-full hover:bg-hover pointer-coarse:size-11"
+          className="qm-press qm-account group flex h-10 items-center gap-2.5 rounded-full p-1 pr-1 hover:bg-hover xl:pr-3 pointer-coarse:h-11"
           aria-label="Account menu"
         >
-          <Avatar name={user.name} />
+          <span className="qm-avatar-ring rounded-full p-[1.5px]">
+            <Avatar name={user.name} className="size-7 border-0 bg-raised" />
+          </span>
+          <span className="hidden max-w-36 flex-col text-left leading-tight xl:flex">
+            <span className="truncate text-label font-medium text-fg">{user.name}</span>
+            {user.title && <span className="truncate text-[11px] text-fg-3">{user.title}</span>}
+          </span>
         </button>
       </MenuTrigger>
       <MenuContent className="w-64">
@@ -376,46 +480,21 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
               {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
             </button>
           </div>
-          {sidebarBody(collapsed)}
+          {sidebarBody(collapsed, true)}
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-line bg-canvas/95 px-3 backdrop-blur-sm sm:px-4 lg:px-8">
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(true)}
-              className="grid size-10 place-items-center rounded-sm text-fg-2 hover:bg-hover lg:hidden"
-              aria-label="Open navigation"
-            >
-              <MenuIcon className="size-5" aria-hidden />
-            </button>
-            <Link href="/my-work" className="lg:hidden" aria-label="QMatus home">
-              <Wordmark />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setCommandOpen(true)}
-              className="qm-press ml-auto flex h-10 items-center gap-2 rounded-full border border-line bg-surface px-4 text-body text-fg-3 shadow-panel hover:border-line-strong hover:text-fg-2 lg:ml-0 lg:w-96"
-              aria-label="Search and commands"
-            >
-              <Search className="size-4 shrink-0" aria-hidden />
-              <span className="hidden flex-1 text-left sm:inline">Search…</span>
-              <kbd className="hidden rounded-full border border-line bg-subtle px-2 font-mono text-meta text-fg-3 lg:inline">⌘K</kbd>
-            </button>
-            <div className="flex items-center gap-1 lg:ml-auto">
-              <Link
-                href="/inbox"
-                className="qm-press relative hidden size-10 place-items-center rounded-full border border-line bg-surface text-fg-2 shadow-panel hover:border-line-strong hover:text-fg md:grid"
-                aria-label={unread ? `Inbox, ${unread} unread` : "Inbox"}
-              >
-                <Bell className="size-[18px]" aria-hidden />
-                {unread > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full bg-ember ring-2 ring-surface" aria-hidden />}
-              </Link>
-              {userMenu}
-            </div>
-          </header>
+          <TopBar
+            crumbs={crumbs}
+            unread={unread}
+            timerRunning={timerRunning}
+            theme={theme}
+            onOpenNav={() => setDrawerOpen(true)}
+            onOpenCommand={() => setCommandOpen(true)}
+            account={userMenu}
+          />
 
-          <main id="main" tabIndex={-1} className="flex min-w-0 flex-1 flex-col pb-20 outline-none md:pb-0">
+          <main ref={mainRef} id="main" tabIndex={-1} className="flex min-w-0 flex-1 flex-col pb-20 outline-none md:pb-0">
             {children}
           </main>
         </div>
@@ -424,13 +503,13 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
       {/* Mobile bottom navigation */}
       <nav
         aria-label="Quick"
-        className="fixed inset-x-0 bottom-0 z-30 grid border-t border-line bg-rail pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="qm-glass fixed inset-x-0 bottom-0 z-30 grid border-t border-line/70 pb-[env(safe-area-inset-bottom)] md:hidden"
         style={{ gridTemplateColumns: `repeat(${bottomNav.length}, minmax(0, 1fr))` }}
       >
         {bottomNav.map((item) => {
           const active = isActive(item);
           return (
-            <Link
+            <IntentLink
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
@@ -444,7 +523,7 @@ export function AppShell({ user, theme, teams, summaryTeams, isAdmin, isLead, un
               {!!item.badge && (
                 <span className="absolute top-2 left-[calc(50%+6px)] size-2 rounded-full bg-ember" aria-label={`${item.badge} unread`} />
               )}
-            </Link>
+            </IntentLink>
           );
         })}
       </nav>

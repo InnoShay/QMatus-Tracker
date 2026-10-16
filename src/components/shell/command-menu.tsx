@@ -95,10 +95,10 @@ export function CommandMenu({ open, onOpenChange, commands }: { open: boolean; o
   return (
     <Dialog.Root open={open} onOpenChange={close}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-scrim" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-scrim backdrop-blur-[3px]" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed top-[12dvh] left-1/2 z-50 flex max-h-[70dvh] w-[calc(100vw-24px)] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-overlay border border-line-strong bg-surface shadow-float"
+          className="fixed top-[12dvh] left-1/2 z-50 flex max-h-[70dvh] w-[calc(100vw-24px)] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-overlay qm-glass-panel"
         >
           <Dialog.Title className="sr-only">Search and commands</Dialog.Title>
           <div className="flex items-center gap-2 border-b border-line px-4">

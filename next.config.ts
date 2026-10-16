@@ -23,6 +23,14 @@ const nextConfig: NextConfig = {
   // against current membership/grant state on each request (docs/DECISIONS.md D-008).
   cacheComponents: false,
   poweredByHeader: false,
+  experimental: {
+    // Client router cache (in the viewer's own browser memory only): revisiting
+    // a module within 30s is instant, and a hover-prefetched page stays usable
+    // for 60s. Every mutation calls revalidatePath, which clears it, so the
+    // staleness bound applies only to other people's changes (DECISIONS D-031).
+    staleTimes: { dynamic: 30, static: 60 },
+    optimizePackageImports: ["lucide-react", "recharts", "radix-ui"],
+  },
   turbopack: {
     rules: {
       "*.css": {

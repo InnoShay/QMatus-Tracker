@@ -18,10 +18,7 @@ export function MenuContent({ className, align = "end", ...rest }: ComponentProp
         align={align}
         sideOffset={6}
         collisionPadding={12}
-        className={cn(
-          "qm-popover z-50 min-w-48 max-w-[min(20rem,calc(100vw-24px))] rounded-md border border-line-strong bg-surface p-1 shadow-float",
-          className,
-        )}
+        className={cn("qm-popover qm-glass-panel z-50 min-w-48 max-w-[min(20rem,calc(100vw-24px))] rounded-md p-1", className)}
         {...rest}
       />
     </DropdownMenu.Portal>
@@ -59,17 +56,40 @@ export function TooltipProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function Tip({ label, children, side = "top" }: { label: string; children: ReactNode; side?: "top" | "right" | "bottom" }) {
+export function Tip({
+  label,
+  children,
+  side = "top",
+  shortcut,
+}: {
+  label: string;
+  children: ReactNode;
+  side?: "top" | "right" | "bottom";
+  /** Keys shown as small chips after the label, e.g. ["G", "I"]. */
+  shortcut?: string[];
+}) {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
           side={side}
-          sideOffset={6}
-          className="qm-popover z-50 rounded-sm bg-fg px-2 py-1 text-meta text-canvas shadow-float"
+          sideOffset={8}
+          className="qm-popover z-50 flex items-center gap-2 rounded-md bg-fg px-2.5 py-1.5 text-meta font-medium text-canvas shadow-float"
         >
           {label}
+          {shortcut && (
+            <span className="flex gap-0.5">
+              {shortcut.map((k) => (
+                <kbd
+                  key={k}
+                  className="grid h-4 min-w-4 place-items-center rounded-[4px] bg-canvas/15 px-1 font-mono text-[10px] leading-none"
+                >
+                  {k}
+                </kbd>
+              ))}
+            </span>
+          )}
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>
@@ -96,11 +116,11 @@ export function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-scrim" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-scrim backdrop-blur-[3px]" />
         <Dialog.Content
           className={cn(
             "qm-dialog fixed top-1/2 left-1/2 z-50 flex max-h-[min(90dvh,760px)] w-[calc(100vw-24px)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col",
-            "rounded-overlay border border-line-strong bg-surface shadow-float",
+            "rounded-overlay border border-line-strong bg-raised shadow-float",
             className,
           )}
         >
@@ -152,8 +172,8 @@ export function ConfirmDialog({
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="fixed inset-0 z-40 bg-scrim" />
-        <AlertDialog.Content className="qm-dialog fixed top-1/2 left-1/2 z-50 w-[calc(100vw-24px)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-overlay border border-line-strong bg-surface p-5 shadow-float">
+        <AlertDialog.Overlay className="fixed inset-0 z-40 bg-scrim backdrop-blur-[3px]" />
+        <AlertDialog.Content className="qm-dialog fixed top-1/2 left-1/2 z-50 w-[calc(100vw-24px)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-overlay border border-line-strong bg-raised p-5 shadow-float">
           <AlertDialog.Title className="text-section font-semibold text-fg">{title}</AlertDialog.Title>
           <AlertDialog.Description asChild>
             <div className="mt-2 text-body text-fg-2">{consequence}</div>

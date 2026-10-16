@@ -46,12 +46,28 @@ export default async function TeamDashboard({ params, searchParams }: PageProps<
   if (!team) return <NotAvailable />;
   const today = todayIn(viewer.timezone);
   const supabase = await createClient();
-  const { data } = await supabase.rpc("team_dashboard_summary", { p_team: team.id });
+  const range: FlowRange = FLOW_RANGES.find((r) => String(r) === sp.range) ?? 14;
+  const readable = canReadTeam(team);
+  // Every read starts at once: one round trip of latency for the whole page.
+  const [{ data }, full, timeRes] = await Promise.all([
+    supabase.rpc("team_dashboard_summary", { p_team: team.id }),
+    readable
+      ? Promise.all([
+          getTeamWorkspace(team.id),
+          listTeamTasks(team.id),
+          listProjects(team.id),
+          team.acceptsRequests ? listIntake(team.id) : Promise.resolve([]),
+          getTeamFlow(team.id, today, range, viewer.timezone),
+        ])
+      : null,
+    // Team time totals are a lead-only capability: one suppressed aggregate, no people (DECISIONS D-022).
+    isTeamLead(team) ? supabase.rpc("team_time_totals", { p_team: team.id, p_from: addDays(today, -13), p_to: today }) : null,
+  ]);
   const summary = data as Summary | null;
   if (!summary) return <NotAvailable />;
 
   // Summary-only grant: allowlisted aggregates, nothing else (spec §7.4).
-  if (!canReadTeam(team)) {
+  if (!readable || !full) {
     const n = (v: number | null) => (v === null ? "Fewer than 3" : String(v));
     return (
       <div className="flex flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -92,14 +108,7 @@ export default async function TeamDashboard({ params, searchParams }: PageProps<
     );
   }
 
-  const range: FlowRange = FLOW_RANGES.find((r) => String(r) === sp.range) ?? 14;
-  const [workspace, { tasks }, projects, intake, flow] = await Promise.all([
-    getTeamWorkspace(team.id),
-    listTeamTasks(team.id),
-    listProjects(team.id),
-    team.acceptsRequests ? listIntake(team.id) : Promise.resolve([]),
-    getTeamFlow(team.id, today, range, viewer.timezone),
-  ]);
+  const [workspace, { tasks }, projects, intake, flow] = full;
   const statusById = new Map(workspace.statuses.map((s) => [s.id, s]));
   const category = (statusId: string) => statusById.get(statusId)?.category ?? "backlog";
   const isOpen = (statusId: string) => !["completed", "canceled"].includes(category(statusId));
@@ -135,13 +144,7 @@ export default async function TeamDashboard({ params, searchParams }: PageProps<
       progress: projectProgress(tasks.filter((t) => t.projectId === p.id).map((t) => ({ statusCategory: category(t.statusId) }))),
     }));
   const canWrite = canWriteTeam(team);
-  // Team time totals are a lead-only capability: one suppressed aggregate, no people (DECISIONS D-022).
-  const timeTotals = isTeamLead(team)
-    ? ((await supabase.rpc("team_time_totals", { p_team: team.id, p_from: addDays(today, -13), p_to: today })).data as {
-        suppressed: boolean;
-        total_seconds: number | null;
-      } | null)
-    : null;
+  const timeTotals = (timeRes?.data ?? null) as { suppressed: boolean; total_seconds: number | null } | null;
 
   const base = `/t/${team.slug}`;
   const board = `${base}/board`;

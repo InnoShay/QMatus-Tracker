@@ -10,7 +10,7 @@ const base =
   "disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-action text-action-fg hover:bg-action-hover",
+  primary: "qm-action bg-action text-action-fg hover:bg-action-hover",
   secondary: "border border-line-strong bg-surface text-fg hover:bg-hover hover:border-control",
   quiet: "text-fg-2 hover:bg-hover hover:text-fg",
   danger: "border border-line-strong bg-surface text-danger hover:bg-danger-bg hover:border-danger",
@@ -43,6 +43,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       className={buttonClass(variant, size, className)}
+      data-magnetic={variant === "primary" ? "" : undefined}
       disabled={disabled || pending}
       aria-busy={pending || undefined}
       {...rest}
@@ -63,7 +64,7 @@ export function LinkButton({
   ...rest
 }: ComponentProps<typeof Link> & { variant?: Variant; size?: Size; icon?: ReactNode }) {
   return (
-    <Link className={buttonClass(variant, size, className)} {...rest}>
+    <Link className={buttonClass(variant, size, className)} data-magnetic={variant === "primary" ? "" : undefined} {...rest}>
       {icon}
       <span>{children}</span>
     </Link>

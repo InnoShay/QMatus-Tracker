@@ -184,3 +184,54 @@ user's request, using their logo and a reference dashboard as inspiration:
 - Relative times in client components render through `RelativeTime`
   (`suppressHydrationWarning` on that node only). This fixes a real hydration mismatch
   ("3 min ago" vs "2 min ago") that the new render tour caught on the List view.
+
+**D-031 · Speed: co-location, local session checks, short client cache.**
+- *Region:* `vercel.json` pins functions to `bom1` (Mumbai), next to the Supabase project
+  (ap-south-1). Before this, functions ran in `iad1` (Washington) and each query crossed
+  the globe; a page made 6–8 of them in sequence (roughly 1.5–2s of network wait).
+- *Sessions:* the proxy verifies the JWT locally with `getClaims()` (ES256 signing keys,
+  JWKS cached). `loadViewer` still asks the Auth server (`getUser()`), so revoked sessions
+  stay refused, but it now runs that call alongside the profile, membership and grant
+  reads (keyed on the verified `sub`) and returns nothing unless the two agree.
+- *Fewer sequential waits:* shell counts run alongside the viewer lookup (they're
+  RLS-scoped to the caller); dashboard, board and list start all their reads at once.
+- *Client router cache:* `staleTimes: { dynamic: 30, static: 60 }`. Revisiting a module
+  within 30s, or opening a page that was prefetched on hover, needs no server round trip.
+  The cache lives only in the viewer's own browser memory, and every mutation calls
+  `revalidatePath`, which clears it. Trade-off: another person's change, or a revoked
+  grant, can take up to 30–60s to show on a page this browser already holds (the next
+  server request is still authorized from current state).
+- *Navigation:* sidebar and mobile links fully prefetch on intent (hover, focus or touch;
+  `IntentLink`), shape-matched `loading.tsx` for dashboard (route group `(overview)`),
+  board and list, and a 220ms settle animation (Web Animations API, compositor-only)
+  instead of View Transitions, which would freeze input and also fire on every save.
+- *Opening a task:* the panel shell appears on the click frame (`useLinkStatus`) with the
+  card's key and title, and the server panel replaces it without a second entrance.
+- Measured on a local production build: module switches 55–135ms, task panel visible on
+  the click frame and complete at about 240ms. Production numbers depend on the Mumbai
+  region change being deployed.
+
+**D-032 · Motion, glass and the greeting.**
+- *Glass* only on floating chrome: header, mobile nav, menus, command palette, toasts and
+  dialog backdrops. Never under body text, never on large scrolling regions.
+- *Cursor:* one delegated `pointermove` listener (`CursorEffects`), batched per animation
+  frame, gives panels and task cards a soft spotlight and lit edge, and gives primary
+  buttons a 2–3px magnetic lean. The native cursor is kept: a replaced or trailing cursor
+  adds perceived lag, which this tool can't afford. Effects are off for touch and coarse
+  pointers, and magnetism is off under reduced motion.
+- *Sidebar:* one highlight glides between items under the pointer.
+- *Greeting:* an original single-stroke "hello" in the style of Apple's (thick rounded
+  stroke with a rainbow running along the word; a glossy highlight on a pastel field in
+  light, pure black in dark). This is not a copy of Apple's artwork. About 2s: the stroke is
+  written over 1.3s, holds, then lifts away with a slight scale and blur as the app
+  settles in beneath it. Once per browser session (any sign-in, a new tab or window).
+  Input always passes through, and any click or key ends it. An inline script sets
+  `<html data-boot>` before first paint so the app never flashes first. The stroke
+  only starts after hydration and one painted frame, so it never competes with startup
+  work (measured: zero frames over 20ms during the greeting). Under reduced motion the
+  word fades in instead of being written.
+- *Top bar:* breadcrumb (team › page), a search and command pill (⌘K), a live timer chip,
+  a one-click theme toggle, the inbox with an unread count and a bell that rings on hover,
+  and the account with a brand-gradient ring. It gains depth once content scrolls beneath
+  it. Tooltips show shortcuts; "G then W/T/I/R/D/B/L/P" jumps between modules.
+

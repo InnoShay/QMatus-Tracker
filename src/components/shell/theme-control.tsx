@@ -23,7 +23,11 @@ const OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
 ];
 
 export function ThemeControl({ initial, compact = false }: { initial: ThemePreference; compact?: boolean }) {
-  const [value, setValue] = useState<ThemePreference>(initial);
+  // Opened later (e.g. in the account menu) it reflects the live choice, which the
+  // top bar may have changed since the page loaded.
+  const [value, setValue] = useState<ThemePreference>(() =>
+    typeof document === "undefined" ? initial : ((document.documentElement.dataset.theme as ThemePreference | undefined) ?? initial),
+  );
   const [, startTransition] = useTransition();
 
   const choose = (next: ThemePreference) => {

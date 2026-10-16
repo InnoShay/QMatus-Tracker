@@ -1,8 +1,10 @@
 import { LogoMark, Wordmark } from "@/components/brand/wordmark";
+import { ResetHello } from "@/components/fx/boot-hello";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      <ResetHello />
       <aside className="hidden flex-col justify-between border-r border-line bg-rail p-12 lg:flex">
         <Wordmark withProduct />
         <div className="flex max-w-md flex-col gap-10">

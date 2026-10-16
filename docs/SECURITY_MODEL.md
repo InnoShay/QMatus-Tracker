@@ -94,6 +94,16 @@ policies decide what to offer and produce non-revealing errors.
   both succeed). Rows are append-only (ends immutable, removal one-way, DELETE
   forbidden by trigger).
 
+## Sessions and caching (D-031)
+
+- The proxy only redirects signed-out visitors; it verifies the session JWT locally
+  (`getClaims`, ES256). Authorization never relies on it.
+- `loadViewer` verifies with the Auth server on every request (catches revoked sessions)
+  in parallel with the RLS reads, and returns nothing unless both name the same user.
+- The Next client router cache keeps already-rendered pages in the viewer's own browser
+  for 30–60s. Mutations clear it. A revoked grant can therefore leave an already-loaded
+  page visible in that browser for up to a minute; the next server request is refused.
+
 ## Secrets
 
 - `.env.local` is gitignored; `.env.example` holds placeholders only.

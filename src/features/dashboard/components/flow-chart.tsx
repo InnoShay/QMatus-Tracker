@@ -44,8 +44,8 @@ export function FlowChart({ days }: { days: FlowDay[] }) {
   const top = Math.ceil(max / step) * step;
   const ticks = Array.from({ length: top / step + 1 }, (_, i) => i * step);
   return (
-    <div className="h-[248px] w-full" data-testid="flow-chart">
-      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 640, height: 248 }}>
+    <div className="h-[248px] w-full min-w-0 overflow-hidden" data-testid="flow-chart">
+      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 280, height: 248 }}>
         <AreaChart data={days} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
           <defs>
             {FLOW_SERIES.map((s) => (
