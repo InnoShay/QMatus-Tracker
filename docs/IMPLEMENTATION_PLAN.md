@@ -42,7 +42,7 @@ verification missing) · **Blocked** (needs external configuration) · **Deferre
 | All UI states: loading, empty, filtered-empty, error, forbidden, conflict | Partial | built: static shape-matched skeletons (workspace, board), empty/filtered-empty, error boundary, not-available, conflict; offline drafts are not preserved |
 | Responsive, both themes, accessibility baseline | Partial | dark is the default (D-028); render tour asserts no console errors and no horizontal overflow for 5 roles × both themes × desktop/mobile; contrast unit-tested from the real tokens; screen-reader and zoom not manually verified |
 | Migrations, seed, CI-ready scripts | Done | `npm run check`, `test:db`, `test:e2e` (no CI config committed) |
-| Backup and restore drill | Blocked | needs a hosted Supabase project |
+| Backup and restore drill | Not done | production exists (free tier); drill not performed |
 
 ## P1 time tracking (spec §7.13, §8.5)
 
@@ -84,10 +84,29 @@ Migration `20261016000600_task_dependencies.sql`; DECISIONS D-025–D-027.
   a shortcut help surface, MFA.
 - **P2 (by spec):** GitHub/GitLab, email digests, reports, AI.
 
-## Blocked by external setup
+## Production deployment (2026-10-16)
 
-- A hosted Supabase project (staging and production) for deployment, SMTP, MFA and the
-  backup/restore drill. Nothing was deployed or created in the cloud.
+- **App:** Vercel project `innoshays-projects/qmatus-tracker`, live at
+  https://qmatus-tracker.vercel.app, connected to GitHub `InnoShay/QMatus-Tracker`
+  (pushes to `main` deploy to production).
+- **Database:** Supabase project `qmatus-tracker` (ref `blejdruolsmnsemdasra`, ap-south-1,
+  free tier). All 7 migrations applied with `supabase db push`; no seed or fixture data.
+- **Auth (pushed from a production copy of config.toml, not committed):** sign-up disabled,
+  site URL and redirects set to the Vercel domain, minimum password length 12, email rate
+  limit 60s, recent sign-in required to change a password.
+- **Verified live:** protected routes redirect to sign-in, security headers and CSP
+  (`connect-src` = the hosted Supabase), public sign-up refused (`signup_disabled`),
+  anonymous table reads denied (`42501`).
+- **Env:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+  `SUPABASE_SECRET_KEY` (sensitive), `APP_URL` set for Production only (not Preview).
+
+## Still blocked or open
+
+- **First owner:** production has no users until `npm run bootstrap` is run against it.
+- **SMTP:** password-reset emails use Supabase's built-in sender (rate-limited, not for
+  real volume). Configure custom SMTP before relying on recovery mail.
+- **Not done yet:** MFA for admins (TOTP is off), a staging project, and the
+  backup/restore drill (free tier has no point-in-time recovery).
 
 ## Verification commands (all run in this session; see the final report for results)
 
