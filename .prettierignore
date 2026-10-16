@@ -1,0 +1,11 @@
+docs/
+.claude/
+.next/
+node_modules/
+supabase/.temp/
+src/types/database.ts
+artifacts/
+test-results/
+playwright-report/
+*.md
+package-lock.json

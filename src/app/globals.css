@@ -1,0 +1,361 @@
+@import "tailwindcss";
+
+/*
+ * QMatus "Signal Graphite" tokens. The ONLY place colour values live (see DESIGN.md).
+ *
+ * Brand: the two global variables below drive the whole theme. Change them and
+ * links, buttons, focus, selection, charts and highlights follow in both modes.
+ *   --brand-primary  cobalt from the logo's notch: navigation, interaction, focus
+ *   --brand-ember    warm signal: metrics, highlights, "needs attention"
+ *
+ * Every other token is defined ONCE with light-dark(): the root's color-scheme
+ * (set per data-theme below) picks the side. Dark is composed first (it is the
+ * main theme); light is aligned to the same roles, not inverted.
+ */
+:root {
+  --brand-primary: #3f66e0;
+  --brand-ember: #f0642e;
+
+  /* Grounds: graphite layers, each a visible step so panels read as objects. */
+  --app-bg: light-dark(#f3f4f6, #0a0b0e);
+  --rail: light-dark(#eceef2, #0e0f13);
+  --surface: light-dark(#ffffff, #14161b);
+  --surface-raised: light-dark(#ffffff, #1a1d23);
+  --surface-subtle: light-dark(#eef0f3, #1a1d23);
+  --surface-hover: light-dark(#f2f4f7, #20232a);
+  --surface-selected: light-dark(
+    color-mix(in oklab, var(--brand-primary) 10%, #ffffff),
+    color-mix(in oklab, var(--brand-primary) 20%, #14161b)
+  );
+
+  --text-primary: light-dark(#0e1116, #f3f4f7);
+  --text-secondary: light-dark(#454c5a, #b6bcc8);
+  --text-tertiary: light-dark(#5c6474, #8b93a2);
+
+  --border-subtle: light-dark(#e1e4e9, #22252d);
+  --border-strong: light-dark(#cfd4dc, #30343e);
+  --border-control: light-dark(#7c8595, #5e6678);
+  /* The faint top edge that lifts a dark panel off the ground. */
+  --edge-highlight: light-dark(rgb(255 255 255 / 0), rgb(255 255 255 / 0.05));
+
+  --accent: light-dark(color-mix(in oklab, var(--brand-primary) 88%, #000000), color-mix(in oklab, var(--brand-primary) 62%, #ffffff));
+  --accent-hover: light-dark(
+    color-mix(in oklab, var(--brand-primary) 70%, #000000),
+    color-mix(in oklab, var(--brand-primary) 42%, #ffffff)
+  );
+  --accent-soft: light-dark(color-mix(in oklab, var(--brand-primary) 10%, #ffffff), color-mix(in oklab, var(--brand-primary) 18%, #14161b));
+  --action-bg: var(--brand-primary);
+  --action-bg-hover: light-dark(
+    color-mix(in oklab, var(--brand-primary) 85%, #000000),
+    color-mix(in oklab, var(--brand-primary) 85%, #ffffff)
+  );
+  --action-fg: #ffffff;
+  --focus-ring: light-dark(var(--brand-primary), color-mix(in oklab, var(--brand-primary) 55%, #ffffff));
+
+  /* Ember: the warm signal. `ember` is a mark/fill colour, `ember-ink` its text step. */
+  --ember: var(--brand-ember);
+  --ember-strong: color-mix(in oklab, var(--brand-ember) 80%, #000000);
+  --ember-ink: light-dark(color-mix(in oklab, var(--brand-ember) 72%, #000000), color-mix(in oklab, var(--brand-ember) 70%, #ffffff));
+  --ember-soft: light-dark(color-mix(in oklab, var(--brand-ember) 12%, #ffffff), color-mix(in oklab, var(--brand-ember) 16%, #14161b));
+  --on-ember: #ffffff;
+
+  /* Supporting hues: each has one job (state, category, series). */
+  --success-fg: light-dark(#13774c, #4fdcaa);
+  --success-bg: light-dark(#e3f6ed, #11291f);
+  --warning-fg: light-dark(#8a5300, #f6c35b);
+  --warning-bg: light-dark(#fff3dc, #2d2412);
+  --danger-fg: light-dark(#b4232f, #ff7d90);
+  --danger-bg: light-dark(#fdecee, #321a20);
+  --violet-fg: light-dark(#6340c9, #b9a4ff);
+  --violet-bg: light-dark(#efeafe, #241d3d);
+  --sky-fg: light-dark(#0b6a8a, #6fd3f2);
+  --sky-bg: light-dark(#e2f4fa, #102a33);
+
+  /* Workflow status pairs (badge text on badge ground). */
+  --st-backlog-fg: light-dark(#4a5263, #aab1be);
+  --st-backlog-bg: light-dark(#eef0f3, #20232a);
+  --st-ready-fg: light-dark(#0b6a8a, #7fd8f4);
+  --st-ready-bg: light-dark(#e2f4fa, #11272f);
+  --st-progress-fg: light-dark(#2f53c9, #a3b8ff);
+  --st-progress-bg: light-dark(#e8eefe, #1a2445);
+  --st-review-fg: light-dark(#6340c9, #c3b2ff);
+  --st-review-bg: light-dark(#efeafe, #241d3d);
+  --st-done-fg: light-dark(#13774c, #6be3b6);
+  --st-done-bg: light-dark(#e3f6ed, #112a21);
+  --st-blocked-fg: light-dark(#b4232f, #ff8fa0);
+  --st-blocked-bg: light-dark(#fdecee, #351b22);
+
+  /* Chart series, fixed order (validated with the dataviz palette checker). */
+  --chart-1: light-dark(#3f66e0, #6683f2);
+  --chart-2: light-dark(#e2572a, #e8652f);
+  --chart-3: light-dark(#13936a, #1fa878);
+  --chart-4: light-dark(#7a52e0, #9b7df2);
+  --chart-grid: light-dark(#e6e9ee, #20232a);
+  --chart-track: light-dark(#e9ecf1, #1f2229);
+
+  --shadow-float:
+    0 12px 32px -8px light-dark(rgb(16 24 40 / 0.18), rgb(0 0 0 / 0.6)), 0 2px 6px -2px light-dark(rgb(16 24 40 / 0.1), rgb(0 0 0 / 0.45));
+  --shadow-raised: 0 1px 2px light-dark(rgb(16 24 40 / 0.06), rgb(0 0 0 / 0.4));
+  --shadow-panel: 0 1px 0 0 var(--edge-highlight) inset, 0 1px 2px light-dark(rgb(16 24 40 / 0.04), rgb(0 0 0 / 0.35));
+  --shadow-drag:
+    0 18px 36px -8px light-dark(rgb(16 24 40 / 0.28), rgb(0 0 0 / 0.7)), 0 4px 10px -4px light-dark(rgb(16 24 40 / 0.14), rgb(0 0 0 / 0.5));
+  --scrim: light-dark(rgb(14 17 22 / 0.4), rgb(0 0 0 / 0.6));
+  --scrim-soft: light-dark(rgb(14 17 22 / 0.08), rgb(0 0 0 / 0.3));
+  --scrim-sheet: light-dark(rgb(14 17 22 / 0.25), rgb(0 0 0 / 0.5));
+
+  --ease-out-ui: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-spatial: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-instant: 80ms;
+  --duration-hover: 120ms;
+  --duration-fast: 150ms;
+  --duration-standard: 180ms;
+  --duration-panel: 220ms;
+  --duration-complex: 260ms;
+}
+
+/* Theme choice only sets the scheme; light-dark() above does the rest. */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="system"] {
+  color-scheme: light dark;
+}
+
+@theme inline {
+  --color-canvas: var(--app-bg);
+  --color-surface: var(--surface);
+  --color-subtle: var(--surface-subtle);
+  --color-hover: var(--surface-hover);
+  --color-selected: var(--surface-selected);
+  --color-fg: var(--text-primary);
+  --color-fg-2: var(--text-secondary);
+  --color-fg-3: var(--text-tertiary);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-control: var(--border-control);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-action: var(--action-bg);
+  --color-action-hover: var(--action-bg-hover);
+  --color-action-fg: var(--action-fg);
+  --color-success: var(--success-fg);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning-fg);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger-fg);
+  --color-danger-bg: var(--danger-bg);
+  --color-focus: var(--focus-ring);
+  --color-rail: var(--rail);
+  --color-raised: var(--surface-raised);
+  --color-ember: var(--ember);
+  --color-ember-strong: var(--ember-strong);
+  --color-ember-ink: var(--ember-ink);
+  --color-ember-soft: var(--ember-soft);
+  --color-on-ember: var(--on-ember);
+  --color-violet: var(--violet-fg);
+  --color-violet-bg: var(--violet-bg);
+  --color-sky: var(--sky-fg);
+  --color-sky-bg: var(--sky-bg);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-track: var(--chart-track);
+  --color-brand: var(--brand-primary);
+  --color-st-backlog: var(--st-backlog-fg);
+  --color-st-backlog-bg: var(--st-backlog-bg);
+  --color-st-ready: var(--st-ready-fg);
+  --color-st-ready-bg: var(--st-ready-bg);
+  --color-st-progress: var(--st-progress-fg);
+  --color-st-progress-bg: var(--st-progress-bg);
+  --color-st-review: var(--st-review-fg);
+  --color-st-review-bg: var(--st-review-bg);
+  --color-st-done: var(--st-done-fg);
+  --color-st-done-bg: var(--st-done-bg);
+  --color-st-blocked: var(--st-blocked-fg);
+  --color-st-blocked-bg: var(--st-blocked-bg);
+
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --text-meta: 12px;
+  --text-meta--line-height: 16px;
+  --text-label: 13px;
+  --text-label--line-height: 18px;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-section: 16px;
+  --text-section--line-height: 22px;
+  --text-title: 24px;
+  --text-title--line-height: 30px;
+  --text-display: 44px;
+  --text-display--line-height: 48px;
+
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-overlay: 16px;
+
+  --shadow-float: var(--shadow-float);
+  --shadow-drag: var(--shadow-drag);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-panel: var(--shadow-panel);
+  --color-scrim: var(--scrim);
+  --color-scrim-soft: var(--scrim-soft);
+  --color-scrim-sheet: var(--scrim-sheet);
+
+  --ease-ui: var(--ease-out-ui);
+  --ease-drawer: var(--ease-drawer);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--app-bg);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--brand-primary) 38%, transparent);
+    color: var(--text-primary);
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  /* Thin, themed scrollbars for the board and panels. */
+  * {
+    scrollbar-color: var(--border-strong) transparent;
+    scrollbar-width: thin;
+  }
+  input,
+  textarea,
+  select {
+    caret-color: var(--accent);
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Motion: entrances use @starting-style so no JS waits on them (Emil: CSS
+   transitions over keyframes; interruptible). */
+@layer components {
+  /* A working panel: a visible surface step, a hairline and (in dark) a lit top edge. */
+  .qm-card {
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-panel);
+  }
+  /* Signature: the logo's detached notch, used to mark "you are here". */
+  .qm-notch {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 1.5px;
+    background: var(--brand-primary);
+    transform: skewY(-6deg);
+  }
+  .qm-popover {
+    transition:
+      opacity var(--duration-fast) var(--ease-out-ui),
+      transform var(--duration-fast) var(--ease-out-ui);
+    transform-origin: var(--radix-dropdown-menu-content-transform-origin, var(--radix-popover-content-transform-origin, top));
+  }
+  .qm-popover[data-state="open"] {
+    @starting-style {
+      opacity: 0;
+      transform: scale(0.97) translateY(-2px);
+    }
+  }
+  .qm-panel {
+    transition:
+      transform var(--duration-panel) var(--ease-drawer),
+      opacity var(--duration-panel) var(--ease-drawer);
+  }
+  .qm-panel[data-state="open"] {
+    @starting-style {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+  .qm-dialog {
+    transition:
+      opacity var(--duration-standard) var(--ease-out-ui),
+      transform var(--duration-standard) var(--ease-out-ui);
+  }
+  .qm-dialog[data-state="open"] {
+    @starting-style {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.98);
+    }
+  }
+  .qm-toast {
+    transition:
+      opacity var(--duration-standard) var(--ease-out-ui),
+      transform var(--duration-standard) var(--ease-out-ui);
+    @starting-style {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  .qm-press {
+    transition:
+      background-color var(--duration-hover) ease,
+      border-color var(--duration-hover) ease,
+      color var(--duration-hover) ease,
+      transform var(--duration-fast) var(--ease-out-ui);
+  }
+  .qm-press:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qm-popover,
+  .qm-panel,
+  .qm-dialog,
+  .qm-toast {
+    transition: opacity var(--duration-fast) linear;
+  }
+  .qm-popover[data-state="open"],
+  .qm-panel[data-state="open"],
+  .qm-dialog[data-state="open"],
+  .qm-toast {
+    @starting-style {
+      transform: none;
+    }
+  }
+  .qm-dialog[data-state="open"] {
+    @starting-style {
+      transform: translate(-50%, -50%);
+    }
+  }
+  .qm-press:active:not(:disabled) {
+    transform: none;
+  }
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+}
