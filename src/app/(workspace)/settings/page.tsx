@@ -6,6 +6,7 @@ import { ThemeControl } from "@/components/shell/theme-control";
 import { signOut } from "@/features/auth/actions";
 import { ProfileForm } from "@/features/settings/profile-form";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
+import { listTimeZones } from "@/lib/timezones";
 import { requireViewer } from "@/server/auth/viewer";
 import { describeAccess } from "@/server/policies";
 
@@ -14,8 +15,7 @@ export const metadata: Metadata = { title: "Settings" };
 export default async function SettingsPage() {
   const viewer = await requireViewer();
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value ?? viewer.theme);
-  const zones = Intl.supportedValuesOf("timeZone");
-  if (!zones.includes(viewer.timezone)) zones.unshift(viewer.timezone);
+  const zones = listTimeZones([viewer.timezone]);
 
   return (
     <div className="flex max-w-3xl flex-col gap-10 px-4 py-5 sm:px-6 lg:px-8">

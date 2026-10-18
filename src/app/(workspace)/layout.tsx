@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { BOOT_SCRIPT, BootHello } from "@/components/fx/boot-hello";
+import { BootHello } from "@/components/fx/boot-hello";
 import { AppShell } from "@/components/shell/app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
@@ -26,7 +26,6 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       <BootHello />
       <AppShell
         user={{ name: viewer.name, email: viewer.email, title: viewer.title }}

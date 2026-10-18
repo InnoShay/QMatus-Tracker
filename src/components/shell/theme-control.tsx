@@ -1,7 +1,7 @@
 "use client";
 
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useSyncExternalStore, useTransition } from "react";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/components/ui/cn";
 import { setTheme } from "@/features/settings/actions";
@@ -16,6 +16,20 @@ export function applyTheme(theme: ThemePreference) {
   document.cookie = `qm-theme=${theme}; path=/; max-age=31536000; samesite=lax`;
 }
 
+/** The live choice is the root attribute; every theme control reads and follows it. */
+function subscribeTheme(cb: () => void) {
+  const mo = new MutationObserver(cb);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return () => mo.disconnect();
+}
+export function useThemePreference(initial: ThemePreference): ThemePreference {
+  return useSyncExternalStore(
+    subscribeTheme,
+    () => (document.documentElement.dataset.theme as ThemePreference | undefined) ?? initial,
+    () => initial,
+  );
+}
+
 const OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
   { value: "system", label: "System", Icon: Monitor },
   { value: "light", label: "Light", Icon: Sun },
@@ -23,15 +37,12 @@ const OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
 ];
 
 export function ThemeControl({ initial, compact = false }: { initial: ThemePreference; compact?: boolean }) {
-  // Opened later (e.g. in the account menu) it reflects the live choice, which the
-  // top bar may have changed since the page loaded.
-  const [value, setValue] = useState<ThemePreference>(() =>
-    typeof document === "undefined" ? initial : ((document.documentElement.dataset.theme as ThemePreference | undefined) ?? initial),
-  );
+  // Follows the live root attribute, so the account menu, Settings and the top
+  // bar's toggle always agree (and hydration uses the server's value first).
+  const value = useThemePreference(initial);
   const [, startTransition] = useTransition();
 
   const choose = (next: ThemePreference) => {
-    setValue(next);
     applyTheme(next);
     startTransition(async () => {
       const res = await setTheme(next);

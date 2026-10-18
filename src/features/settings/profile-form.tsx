@@ -2,11 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Field, Input } from "@/components/ui/field";
 import { toast } from "@/components/ui/toast";
+import type { ZoneOption } from "@/lib/timezones";
 import { updateProfile } from "./actions";
+import { TimeZonePicker } from "./time-zone-picker";
 
-export function ProfileForm({ name, title, timezone, zones }: { name: string; title: string | null; timezone: string; zones: string[] }) {
+export function ProfileForm({
+  name,
+  title,
+  timezone,
+  zones,
+}: {
+  name: string;
+  title: string | null;
+  timezone: string;
+  zones: ZoneOption[];
+}) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
   return (
@@ -32,15 +44,7 @@ export function ProfileForm({ name, title, timezone, zones }: { name: string; ti
         {(p) => <Input {...p} name="title" defaultValue={title ?? ""} maxLength={80} />}
       </Field>
       <Field label="Time zone" hint="Due dates and timestamps are shown in this zone." error={errors.timezone}>
-        {(p) => (
-          <Select {...p} name="timezone" defaultValue={timezone}>
-            {zones.map((z) => (
-              <option key={z} value={z}>
-                {z.replaceAll("_", " ")}
-              </option>
-            ))}
-          </Select>
-        )}
+        {(p) => <TimeZonePicker {...p} name="timezone" defaultValue={timezone} zones={zones} />}
       </Field>
       <Button type="submit" variant="primary" pending={pending} pendingLabel="Saving…" className="self-start">
         Save profile

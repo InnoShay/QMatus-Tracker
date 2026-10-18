@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useState } from "react";
+import { HELLO_SEEN_KEY } from "./boot-script";
 
-const SEEN = "qm-hello";
+const SEEN = HELLO_SEEN_KEY;
 /* One continuous, hand-drawn stroke (original lettering for QMatus). */
 const HELLO =
   "M40 196 C78 178 118 132 140 82 C154 50 152 22 132 26 C110 31 104 82 102 132 C101 162 100 186 100 204 C110 168 132 140 156 142 C176 144 176 170 174 196 C173 206 180 210 192 204 C212 192 230 176 244 160 C258 144 254 126 238 128 C216 131 206 168 214 190 C222 210 252 210 278 190 C304 170 326 128 338 84 C346 52 340 26 322 30 C300 36 296 92 296 140 C296 178 300 204 318 204 C334 204 352 186 366 166 C384 140 404 104 414 76 C424 50 418 26 400 30 C378 36 374 96 374 142 C374 178 378 204 396 204 C414 204 432 186 446 166 C460 146 476 134 494 134 C518 134 530 156 524 178 C518 200 496 210 478 202 C460 194 458 168 472 150 C484 136 504 132 520 136 C540 140 560 140 586 128";
@@ -24,9 +25,6 @@ const SPECTRUM: [number, string][] = [
 const T = { draw: 1300, delay: 80, hold: 320, exit: 500 };
 const LEAVE_AT = T.delay + T.draw + T.hold;
 const LEAVE_AT_REDUCED = 900;
-
-/** Runs before first paint on full page loads, so the app never flashes before the greeting. */
-export const BOOT_SCRIPT = `try{if(!sessionStorage.getItem("${SEEN}"))document.documentElement.dataset.boot="1"}catch(e){}`;
 
 /**
  * The greeting: "hello" is written in one stroke, holds for a beat, then the

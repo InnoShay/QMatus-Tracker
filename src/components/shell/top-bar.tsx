@@ -10,7 +10,7 @@ import { Tip } from "@/components/ui/overlays";
 import { toast } from "@/components/ui/toast";
 import { setTheme } from "@/features/settings/actions";
 import type { ThemePreference } from "@/lib/theme";
-import { applyTheme } from "./theme-control";
+import { applyTheme, useThemePreference } from "./theme-control";
 
 export type Crumbs = {
   team: { name: string; href: string } | null;
@@ -169,7 +169,7 @@ function subscribeScheme(cb: () => void) {
 
 /** One click between dark and light; the full choice (incl. System) lives in the account menu. */
 function ThemeToggle({ initial }: { initial: ThemePreference }) {
-  const [value, setValue] = useState(initial);
+  const value = useThemePreference(initial);
   const [, startTransition] = useTransition();
   const osDark = useSyncExternalStore(
     subscribeScheme,
@@ -185,7 +185,6 @@ function ThemeToggle({ initial }: { initial: ThemePreference }) {
         className={iconButton}
         aria-label={`Switch to ${next} theme`}
         onClick={() => {
-          setValue(next);
           applyTheme(next);
           startTransition(async () => {
             const res = await setTheme(next);

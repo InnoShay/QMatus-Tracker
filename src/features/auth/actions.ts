@@ -31,14 +31,15 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: email.toLowerCase(), password });
-  if (error) {
+  const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email: email.toLowerCase(), password });
+  if (error || !signedIn.user) {
     recordHit(limitKey, 15 * 60_000);
     // Same message for unknown email, wrong password and disabled accounts.
     return { error: "That email and password combination didn't work." };
   }
 
-  const { data: profile } = await supabase.from("profiles").select("theme").maybeSingle();
+  // RLS lets members read their colleagues' profiles too, so select this user's row explicitly.
+  const { data: profile } = await supabase.from("profiles").select("theme").eq("id", signedIn.user.id).maybeSingle();
   if (profile?.theme) {
     (await cookies()).set(THEME_COOKIE, profile.theme, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
   }

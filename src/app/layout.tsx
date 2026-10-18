@@ -3,6 +3,7 @@ import "@fontsource-variable/geist-mono/wght.css";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { BOOT_SCRIPT } from "@/components/fx/boot-script";
 import { CursorEffects } from "@/components/fx/cursor-effects";
 import { Toaster } from "@/components/ui/toast";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
@@ -28,6 +29,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
     <html lang="en" data-theme={theme} suppressHydrationWarning>
+      <head>
+        {/* Marks <html data-boot> before first paint so a signed-in page never flashes before the greeting. */}
+        <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-dvh bg-canvas text-fg antialiased">
         {children}
         <Toaster />
